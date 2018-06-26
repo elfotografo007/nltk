@@ -79,6 +79,7 @@ from nltk.tokenize.toktok   import ToktokTokenizer
 from nltk.tokenize.treebank import TreebankWordTokenizer
 from nltk.tokenize.util     import string_span_tokenize, regexp_span_tokenize
 from nltk.tokenize.stanford_segmenter import StanfordSegmenter
+from nltk.tokenize.spacy    import SpacyTokenizer
 
 # Standard sentence tokenizer.
 def sent_tokenize(text, language='english'):
