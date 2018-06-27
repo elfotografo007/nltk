@@ -2,12 +2,14 @@
 from __future__ import absolute_import, unicode_literals
 import unittest
 
+import nltk.data
 from nltk.corpus import (sinica_treebank, conll2007, indian, cess_cat, cess_esp,
                          floresta, ptb, udhr) # mwa_ppdb
 
 from nltk.compat import python_2_unicode_compatible
 from nltk.tree import Tree
 from nltk.test.unit.utils import skipIf
+from nltk.corpus.reader import pl196x
 
 
 class TestUdhr(unittest.TestCase):
@@ -195,6 +197,41 @@ class TestMWAPPDB(unittest.TestCase):
             ('53,76', '53.76'), ('6.9.5', '6.9.5.'),
             ('7.7.6.3', '7.7.6.3.'), ('76,20', '76.20'),
             ('79,85', '79.85'), ('93,65', '93.65')] )
+
+class TestPl196x(unittest.TestCase):
+    pl196x_dir = nltk.data.find('corpora/pl196x')
+    pl = pl196x.Pl196xCorpusReader(pl196x_dir,r'.*\.xml',textids='textids.txt',cat_file="cats.txt")
+
+    def test_fileids(self):
+        assert len(self.pl.fileids()) == 10
+        assert 'pl196x.xml' in self.pl.fileids()
+
+    def test_words(self):
+        words = self.pl.words(fileids=self.pl.fileids())
+        assert words[:5] == [
+            'Sztuka', 'utraciła', 'swoją', 'moc', 'pobudzającą']
+
+    def test_sents(self):
+        sents = self.pl.sents(fileids=self.pl.fileids())
+        assert sents[0][:5] == [
+            'Sztuka', 'utraciła', 'swoją', 'moc', 'pobudzającą']
+
+    def test_paras(self):
+        paras = self.pl.paras(fileids=self.pl.fileids())
+        assert paras[0][0][:5] == [
+            'Sztuka', 'utraciła', 'swoją', 'moc', 'pobudzającą']
+
+    def test_tagged_words(self):
+        tagged_words = self.pl.tagged_words(fileids=self.pl.fileids())[:2]
+        assert tagged_words == [('Sztuka', 'SSNF---------P'), ('utraciła', 'VS-F-3POD----P')]
+
+    def test_tagged_sents(self):
+        sents = self.pl.tagged_sents(fileids=self.pl.fileids())
+        assert sents[0][:2] == [('Sztuka', 'SSNF---------P'), ('utraciła', 'VS-F-3POD----P')]
+
+    def test_tagged_paras(self):
+        paras = self.pl.tagged_paras(fileids=self.pl.fileids())
+        assert paras[0][0][:2] == [('Sztuka', 'SSNF---------P'), ('utraciła', 'VS-F-3POD----P')]
 
 # unload corpora
 from nltk.corpus import teardown_module
