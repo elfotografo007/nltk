@@ -4,6 +4,8 @@ import unittest
 import os.path
 
 from nltk.corpus.reader import *
+from nltk.data import FileSystemPathPointer
+
 
 class TestRaw(unittest.TestCase):
     CORPORA = (AlignedCorpusReader, ChasenCorpusReader, ChunkedCorpusReader,
@@ -24,3 +26,8 @@ class TestRaw(unittest.TestCase):
         for reader in self.CORPORA:
             r = reader(self.FILE_PATH, '.*\.csv')
             assert r.raw('test_corpus_reader.json') == '{"test":"json", "number":5}\n'
+
+    def test_nombank_raw_fileid(self):
+        root = FileSystemPathPointer(self.FILE_PATH)
+        r = NombankCorpusReader(root, 'test_corpus_reader.json')
+        assert r.raw('test_corpus_reader.json') == '{"test":"json", "number":5}\n'
