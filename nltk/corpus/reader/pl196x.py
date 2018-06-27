@@ -4,7 +4,7 @@
 # Author: Piotr Kasprzyk <p.j.kasprzyk@gmail.com>
 # URL: <http://nltk.org/>
 # For license information, see LICENSE.TXT
-
+from collections import namedtuple
 from six import string_types
 
 from nltk.corpus.reader.api import *
@@ -21,6 +21,9 @@ TYPE = re.compile(r'type="(.*?)"')
 ANA = re.compile(r'ana="(.*?)"')
 
 TEXTID = re.compile(r'text id="(.*?)"')
+
+CorpusSet = namedtuple(
+    'CorpusSet', ['tagged', 'group_by_sent', 'group_by_para'])
 
 
 class TEICorpusView(StreamBackedCorpusView):
@@ -121,9 +124,8 @@ class Pl196xCorpusReader(CategorizedCorpusReader, XMLCorpusReader):
         self._t2f[text_id].append(file_id)
 
     def _resolve(self, fileids, categories, textids=None):
-        tmp = None
-        if len(filter(lambda accessor: accessor is None,
-                      (fileids, categories, textids))) != 1:
+        accessors = (fileids, categories, textids)
+        if len([a for a in accessors if a is not None]) != 1:
 
             raise ValueError('Specify exactly one of: fileids, '
                              'categories or textids')
@@ -156,13 +158,14 @@ class Pl196xCorpusReader(CategorizedCorpusReader, XMLCorpusReader):
         of required chunks---giving much more control to the user.
         """
         fileids, _ = self._resolve(fileids, categories)
-        if fileids is None: return sorted(self._t2f)
+        if fileids is None:
+            return sorted(self._t2f)
 
         if isinstance(fileids, string_types):
             fileids = [fileids]
         return sorted(sum((self._f2t[d] for d in fileids), []))
 
-    def words(self, fileids=None, categories=None, textids=None):
+    def _load_data(self, fileids, categories, textids, corpus_set):
         fileids, textids = self._resolve(fileids, categories, textids)
         if fileids is None:
             fileids = self._fileids
@@ -171,110 +174,37 @@ class Pl196xCorpusReader(CategorizedCorpusReader, XMLCorpusReader):
 
         if textids:
             return concat([TEICorpusView(self.abspath(fileid),
-                                         False, False, False,
+                                         corpus_set.tagged,
+                                         corpus_set.group_by_sent,
+                                         corpus_set.group_by_para,
                                          head_len=self.head_len,
                                          textids=textids[fileid])
                            for fileid in fileids])
-        else:
-            return concat([TEICorpusView(self.abspath(fileid),
-                                         False, False, False,
-                                         head_len=self.head_len)
-                           for fileid in fileids])
+
+        return concat([TEICorpusView(self.abspath(fileid),
+                                     corpus_set.tagged,
+                                     corpus_set.group_by_sent,
+                                     corpus_set.group_by_para,
+                                     head_len=self.head_len)
+                       for fileid in fileids])
+
+    def words(self, fileids=None, categories=None, textids=None):
+        return self._load_data(fileids, categories, textids, CorpusSet(False, False, False))
 
     def sents(self, fileids=None, categories=None, textids=None):
-        fileids, textids = self._resolve(fileids, categories, textids)
-        if fileids is None:
-            fileids = self._fileids
-        elif isinstance(fileids, string_types):
-            fileids = [fileids]
-
-        if textids:
-            return concat([TEICorpusView(self.abspath(fileid),
-                                         False, True, False,
-                                         head_len=self.head_len,
-                                         textids=textids[fileid])
-                           for fileid in fileids])
-        else:
-            return concat([TEICorpusView(self.abspath(fileid),
-                                         False, True, False,
-                                         head_len=self.head_len)
-                           for fileid in fileids])
+        return self._load_data(fileids, categories, textids, CorpusSet(False, True, False))
 
     def paras(self, fileids=None, categories=None, textids=None):
-        fileids, textids = self._resolve(fileids, categories, textids)
-        if fileids is None:
-            fileids = self._fileids
-        elif isinstance(fileids, string_types):
-            fileids = [fileids]
-
-        if textids:
-            return concat([TEICorpusView(self.abspath(fileid),
-                                         False, True, True,
-                                         head_len=self.head_len,
-                                         textids=textids[fileid])
-                           for fileid in fileids])
-        else:
-            return concat([TEICorpusView(self.abspath(fileid),
-                                         False, True, True,
-                                         head_len=self.head_len)
-                           for fileid in fileids])
+        return self._load_data(fileids, categories, textids, CorpusSet(False, True, True))
 
     def tagged_words(self, fileids=None, categories=None, textids=None):
-        fileids, textids = self._resolve(fileids, categories, textids)
-        if fileids is None:
-            fileids = self._fileids
-        elif isinstance(fileids, string_types):
-            fileids = [fileids]
-
-        if textids:
-            return concat([TEICorpusView(self.abspath(fileid),
-                                         True, False, False,
-                                         head_len=self.head_len,
-                                         textids=textids[fileid])
-                           for fileid in fileids])
-        else:
-            return concat([TEICorpusView(self.abspath(fileid),
-                                         True, False, False,
-                                         head_len=self.head_len)
-                           for fileid in fileids])
+        return self._load_data(fileids, categories, textids, CorpusSet(True, False, False))
 
     def tagged_sents(self, fileids=None, categories=None, textids=None):
-        fileids, textids = self._resolve(fileids, categories, textids)
-        if fileids is None:
-            fileids = self._fileids
-        elif isinstance(fileids, string_types):
-            fileids = [fileids]
-
-        if textids:
-            return concat([TEICorpusView(self.abspath(fileid),
-                                         True, True, False,
-                                         head_len=self.head_len,
-                                         textids=textids[fileid])
-                           for fileid in fileids])
-        else:
-            return concat([TEICorpusView(self.abspath(fileid),
-                                         True, True, False,
-                                         head_len=self.head_len)
-                           for fileid in fileids])
+        return self._load_data(fileids, categories, textids, CorpusSet(True, True, False))
 
     def tagged_paras(self, fileids=None, categories=None, textids=None):
-        fileids, textids = self._resolve(fileids, categories, textids)
-        if fileids is None:
-            fileids = self._fileids
-        elif isinstance(fileids, string_types):
-            fileids = [fileids]
-
-        if textids:
-            return concat([TEICorpusView(self.abspath(fileid),
-                                         True, True, True,
-                                         head_len=self.head_len,
-                                         textids=textids[fileid])
-                           for fileid in fileids])
-        else:
-            return concat([TEICorpusView(self.abspath(fileid),
-                                         True, True, True,
-                                         head_len=self.head_len)
-                           for fileid in fileids])
+        return self._load_data(fileids, categories, textids, CorpusSet(True, True, True))
 
     def xml(self, fileids=None, categories=None):
         fileids, _ = self._resolve(fileids, categories)
