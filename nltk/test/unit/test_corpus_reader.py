@@ -27,6 +27,13 @@ class TestRaw(unittest.TestCase):
             r = reader(self.FILE_PATH, '.*\.csv')
             assert r.raw('test_corpus_reader.json') == '{"test":"json", "number":5}\n'
 
+    def test_nombank_raw(self):
+        root = FileSystemPathPointer(self.FILE_PATH)
+        r = NombankCorpusReader(root, 'test_corpus_reader.json',
+                                'test_corpus_reader.json',
+                                'test_corpus_reader.json')
+        assert r.raw() == '{"test":"json", "number":5}\n'*3
+
     def test_nombank_raw_fileid(self):
         root = FileSystemPathPointer(self.FILE_PATH)
         r = NombankCorpusReader(root, 'test_corpus_reader.json')
