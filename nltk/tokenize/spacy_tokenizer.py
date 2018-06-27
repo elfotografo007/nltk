@@ -18,6 +18,6 @@ class SpacyTokenizer(TokenizerI):
         :type s: str
         :return: str
         """
-        nlp = spacy.load('en')
+        nlp = spacy.load('en', disable=['tagger', 'parser', 'ner'])
         doc = nlp(s)
         return [w.text for w in doc]
