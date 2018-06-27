@@ -5,7 +5,7 @@ See also nltk/test/tokenize.doctest
 """
 
 from __future__ import unicode_literals
-from nltk.tokenize import TweetTokenizer, StanfordSegmenter, TreebankWordTokenizer
+from nltk.tokenize import TweetTokenizer, StanfordSegmenter, TreebankWordTokenizer, SpacyTokenizer
 from nose import SkipTest
 import unittest
 import os
@@ -165,4 +165,16 @@ class TestTokenize(unittest.TestCase):
             (97, 99), (100, 106), (107, 113)
         ]
         result = list(tokenizer.span_tokenize(test3))
+        self.assertEqual(result, expected)
+
+    def test_spacy_tokenizer(self):
+        """
+        Test SpacyTokenizer.tokenize function
+        """
+
+        tokenizer = SpacyTokenizer()
+
+        test1 = 'This is a sentence.'
+        expected = ['This', 'is', 'a', 'sentence', '.']
+        result = tokenizer.tokenize(test1)
         self.assertEqual(result, expected)
